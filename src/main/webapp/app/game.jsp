@@ -94,6 +94,9 @@
                 window.setTimeout(function () {
                     checkStatus();
                 }, 1000);
+            } else if (game.status === "FINISHED") {
+                location.href = "<c:url value='/app/result.jsp'/>";
+                return;
             } else {
                 return;
             }
@@ -132,7 +135,7 @@
         var checked = document.querySelector('input[name=addr]:checked');
         var checkedAddr = checked.id;
         console.log("firing addr " + checkedAddr);
-        fetch("/api/game/fire/" + checkedAddr, {
+        fetch("<c:url value='/api/game/fire'/>/" + checkedAddr, {
             "method": "POST",
             headers: {
                 'Accept': 'application/json',
@@ -141,28 +144,7 @@
         }).then(function (response) {
             console.log("DONE");
             checkStatus();
-
-         console.log("get cell from oposite field");
-
         });
-
-        function get() {
-            console.log("get cell from oposite field");
-            var checked = document.querySelector('input[name=addr]:checked');
-            var checkedAddr = checked.id;
-            console.log("firing addr " + checkedAddr);
-            fetch("/api/game/fire/" + checkedAddr, {
-                "method": "GET",
-                headers: {
-                    'Accept': 'application/json',
-                    'Content-Type': 'application/json'
-                }
-            }).then(function (response) {
-                console.log("DONE");
-                checkStatus();
-            });
-
-
     }
 </script>
 </body>

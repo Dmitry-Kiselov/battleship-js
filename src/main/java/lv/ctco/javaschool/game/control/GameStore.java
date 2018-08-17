@@ -6,17 +6,10 @@ import lv.ctco.javaschool.game.entity.CellState;
 import lv.ctco.javaschool.game.entity.Game;
 import lv.ctco.javaschool.game.entity.GameStatus;
 
-import javax.annotation.security.RolesAllowed;
 import javax.ejb.Stateless;
-import javax.json.JsonObject;
-import javax.json.JsonValue;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
-import javax.ws.rs.POST;
-import javax.ws.rs.Path;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 @Stateless
@@ -61,9 +54,21 @@ public class GameStore {
                 .findFirst();
     }
 
+    public Optional<Game> getLatestGame(User user) {
+        return em.createQuery(
+                "select g " +
+                        "from Game g " +
+                        "where g.player1 = :user " +
+                        "   or g.player2 = :user " +
+                        "order by g.id desc", Game.class)
+                .setParameter("user", user)
+                .setMaxResults(1)
+                .getResultStream()
+                .findFirst();
+    }
 
-    public void setCellState(Game game, User player, String address, boolean targetArea, CellState state) {
-        Optional<Cell> cell = em.createQuery(
+    public Optional<Cell> findCell(Game game, User player, String address, boolean targetArea) {
+        return em.createQuery(
                 "select c from Cell c " +
                         "where c.game = :game " +
                         "  and c.user = :user " +
@@ -75,6 +80,10 @@ public class GameStore {
                 .setParameter("address", address)
                 .getResultStream()
                 .findFirst();
+    }
+
+    public void setCellState(Game game, User player, String address, boolean targetArea, CellState state) {
+        Optional<Cell> cell = findCell(game, player, address, targetArea);
         if (cell.isPresent()) {
             cell.get().setState(state);
         } else {
@@ -87,7 +96,6 @@ public class GameStore {
             em.persist(newCell);
         }
     }
-
 
     public void setShips(Game game, User player, boolean targetArea, List<String> ships) {
         clearField(game, player, targetArea);
@@ -102,6 +110,7 @@ public class GameStore {
                     return c;
                 }).forEach(c -> em.persist(c));
     }
+
     private void clearField(Game game, User player, boolean targetArea) {
         List<Cell> cells = em.createQuery(
                 "select c " +
@@ -125,21 +134,5 @@ public class GameStore {
                 .setParameter("game", game)
                 .setParameter("user", player)
                 .getResultList();
-    }
-
-    public Optional<Cell>  getCellState(Game game, User player, String address, boolean targetArea) {
-        Optional<Cell> cell = em.createQuery(
-                "select c from Cell c " +
-                        "where c.game = :game " +
-                        "  and c.user = :user " +
-                        "  and c.targetArea = :target " +
-                        "  and c.address = :address", Cell.class)
-                .setParameter("game", game)
-                .setParameter("user", player)
-                .setParameter("target", targetArea)
-                .setParameter("address", address)
-                .getResultStream()
-                .findFirst();
-        return cell;
     }
 }

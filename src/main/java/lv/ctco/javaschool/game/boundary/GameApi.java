@@ -15,7 +15,6 @@ import javax.json.JsonString;
 import javax.json.JsonValue;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
-import javax.validation.constraints.AssertFalse;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -113,7 +112,7 @@ public class GameApi {
     @Path("/status")
     public GameDto getGameStatus() {
         User currentUser = userStore.getCurrentUser();
-        Optional<Game> game = gameStore.getOpenGameFor(currentUser);
+        Optional<Game> game = gameStore.getLatestGame(currentUser);
         return game.map(g -> {
             GameDto dto = new GameDto();
             dto.setStatus(g.getStatus());
@@ -123,13 +122,57 @@ public class GameApi {
     }
 
     @POST
-    @RolesAllowed({"ADMIN", "USER"})
+    @RolesAllowed({"ADMIN","USER"})
     @Path("/fire/{address}")
     public void doFire(@PathParam("address") String address) {
         log.info("Firing to " + address);
         User currentUser = userStore.getCurrentUser();
-        Optional<Game> game = gameStore.getOpenGameFor(currentUser);
 
+        Optional<Game> game = gameStore.getOpenGameFor(currentUser);
+        game.ifPresent(g -> {
+            User oppositeUser = g.getOpposite(currentUser);
+            Optional<Cell> enemyCell = gameStore.findCell(g, oppositeUser, address, false);
+      //       g.getPlayer1Shots())
+            if (enemyCell.isPresent()) {
+                Cell c = enemyCell.get();
+                if (c.getState() == CellState.SHIP) {
+                    c.setState(CellState.HIT);
+                    gameStore.setCellState(g, currentUser, address, true, CellState.HIT);
+                    checkFinishState(g, oppositeUser);
+                    return;
+                } else if (c.getState() == CellState.EMPTY) {
+                    c.setState(CellState.MISS);
+                    gameStore.setCellState(g, currentUser, address, true, CellState.MISS);                }
+            } else {
+                gameStore.setCellState(g, oppositeUser, address, false, CellState.MISS);
+                gameStore.setCellState(g, currentUser, address, true, CellState.MISS);
+            }
+
+            boolean p1a = g.isPlayer1Active();
+            g.setPlayer1Active(!p1a);
+            g.setPlayer2Active(p1a);
+        });
+    }
+
+    private void checkFinishState(Game game, User player) {
+        boolean hasShips = gameStore.getCells(game, player)
+                .stream()
+                .filter(c -> !c.isTargetArea())
+                .anyMatch(c -> c.getState() == CellState.SHIP);
+        if (!hasShips) {
+            game.setStatus(GameStatus.FINISHED);
+        }
+    }
+
+
+
+
+
+
+
+}
+
+        /*
         if (game.isPresent()) {
             Game gameMy = game.get();
             User oppositeUser = gameMy.getOppositePlayer(currentUser);
@@ -139,22 +182,25 @@ public class GameApi {
                 Cell cell = oppositeCell.get();
 
                 if (cell.getState().equals(CellState.SHIP)) {
-                    cell.setState(CellState.HIT)
+                    cell.setState(CellState.HIT);
                     gameStore.setCellState(gameMy, currentUser, address, false, CellState.HIT);
-                }
-            }
+                    gameStore.setCellState(gameMy, oppositeUser, address, true, CellState.HIT);
 
-            game.ifPresent(g -> {
+                    Optional<Cell> endGameNotPresent = gameStore.checkIsGameFinished(gameMy, oppositeUser, false);
+                    if (!endGameNotPresent.isPresent()) {
+                        gameMy.setStatus(GameStatus.FINISHED);
+                    }
+                } else {
+                    gameStore.setCellState(gameMy, currentUser, address, false, CellState.MISS);
+                    gameStore.setCellState(gameMy, oppositeUser, address, true, CellState.MISS);
 
-                boolean p1a = g.isPlayer1Active();
-                g.setPlayer1Active(!p1a);
-                g.setPlayer2Active(p1a);
-            });
-        }
+                    game.ifPresent(g -> {
+
+                        boolean p1a = g.isPlayer1Active();
+                        g.setPlayer1Active(!p1a);
+                        g.setPlayer2Active(p1a);
+
+                    });
+        */
 
 
-    }
-}
-
-
-}
