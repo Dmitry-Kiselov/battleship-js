@@ -10,7 +10,7 @@
 
 <h2>Game Over!</h2>
 
-<body onload="displayWinner()"
+<body onload="displayWinner()">
 <%--     onload="displayWinnerList()" >
 --%>
 
