@@ -11,6 +11,7 @@ import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 @Stateless
 public class GameStore {
@@ -27,6 +28,17 @@ public class GameStore {
                 .getResultStream()
                 .findFirst();
     }
+//
+    public List<Game> getCompleteGame() {
+        return em.createQuery(
+                "select g " +
+                        "from Game g " +
+                        "where g.status = :status", Game.class)
+                .setParameter("status", GameStatus.FINISHED)
+                .getResultList();
+    }
+//
+
 
     public Optional<Game> getStartedGameFor(User user, GameStatus status) {
         return em.createQuery(

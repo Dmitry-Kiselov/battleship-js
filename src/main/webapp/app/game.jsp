@@ -9,6 +9,7 @@
         table {
             border-collapse: collapse;
         }
+
         table, th, td {
             border: 1px solid black;
         }
@@ -103,6 +104,7 @@
             drawShips();
         });
     }
+
     function drawShips() {
         fetch("<c:url value='/api/game/cells'/>", {
             "method": "GET",
@@ -120,6 +122,7 @@
             });
         });
     }
+
     function setRadioButtonsVisible(visible) {
         var radioButtons = document.querySelectorAll('input[name=addr]');
         radioButtons.forEach(function(btn){
@@ -130,6 +133,7 @@
             }
         });
     }
+
     function fire() {
         console.log("firing");
         var checked = document.querySelector('input[name=addr]:checked');

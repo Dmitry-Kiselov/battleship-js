@@ -17,7 +17,6 @@ public class Game {
     private boolean player1Active;
     private int player1Shots = 0;
 
-
     @ManyToOne
     private User player2;
     private boolean player2Active;

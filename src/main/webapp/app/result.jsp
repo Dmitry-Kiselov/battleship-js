@@ -9,7 +9,10 @@
 </head>
 
 <h2>Game Over!</h2>
-<body onload="displayWinner()">
+
+<body onload="displayWinner()"
+<%--     onload="displayWinnerList()" >
+--%>
 
 <div id="winner" class="w3-hide">
     <h1>You win!</h1>
@@ -40,6 +43,9 @@
             }
         })
     }
+
+
+
 </script>
 
 
